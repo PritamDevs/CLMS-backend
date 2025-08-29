@@ -1,6 +1,6 @@
 const mongoose =require('mongoose')
 let Book = require("../models/book.model")
-const bycrypt=require('bcrypt')
+const bcrypt=require('bcrypt')
 const jwt=require('jsonwebtoken')
 module.exports.CreateBook = async(req,res)=>{
     try {

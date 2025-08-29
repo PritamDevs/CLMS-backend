@@ -20,6 +20,8 @@ let librarianRoute = require('./routes/librarian.route')
 app.use('/api/librarian',librarianRoute)
 let bookRoute = require('./routes/book.route')
 app.use('/api/book',bookRoute)
+let issueRequestRoute = require('./routes/issueRequest.route');
+app.use('/api/request', issueRequestRoute)
 
 connectDB()
 .then(()=>{

@@ -2,6 +2,8 @@ const mongoose =require('mongoose')
 const Student = require("../models/student.model")
 const bcrypt=require('bcrypt')
 const jwt=require('jsonwebtoken')
+const IssueRequest = require("../models/issueRequest.model");
+const Book = require("../models/book.model");
 module.exports.login=async(req,res)=> {
    try{
     let{email,password}=req.body
@@ -81,3 +83,33 @@ module.exports.Register=async(req,res)=> {
              return res.status(500).json({message:"Internal Server Error",success:false});
         }
     }
+
+    module.exports.RequestBookIssue = async (req, res) => {
+    try {
+        const studentId = req.user.id;
+        const { bookId } = req.body;
+        if (!bookId) return res.status(400).json({ message: "Book ID is required", success:false });
+
+        const book = await Book.findById(bookId);
+        if (!book) return res.status(404).json({ message: "Book not found", success:false });
+
+        const existing = await IssueRequest.findOne({ student: studentId, book: bookId });
+        if (existing) return res.status(400).json({ message: "You have already requested this book", success:false });
+
+        const request = await IssueRequest.create({ student: studentId, book: bookId });
+        res.status(201).json({ message: "Book request submitted", success:true, request });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: "Internal Server Error", success:false });
+    }
+    };
+
+    module.exports.MyRequests = async (req, res) => {
+    try {
+        const requests = await IssueRequest.find({ student: req.user.id }).populate("book");
+        res.status(200).json({ message: "Your book requests", success:true, requests });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: "Internal Server Error", success:false });
+    }
+};
