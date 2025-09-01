@@ -9,7 +9,8 @@ const issueRequestSchema = new mongoose.Schema({
     },
     status: { 
         type: String, 
-        enum: ["pending", "approved", "rejected"], default: "pending" ,
+        enum: ["pending", "approved", "rejected","return_requested","returned"], 
+        default: "pending" ,
     },
     requestedAt: { 
         type: Date, 
@@ -17,6 +18,9 @@ const issueRequestSchema = new mongoose.Schema({
     },
     respondedAt: {
         type: Date
+    },
+    returnedAt:{
+        type:Date
     },
     rejectionReason: {
         type: String

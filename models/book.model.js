@@ -33,7 +33,7 @@ let bookSchema = new Schema({
         type: String,
         required: true,
     },
-    stock: {
+    copiesAvailable: {
         type: Number,
         default: 1,
     },

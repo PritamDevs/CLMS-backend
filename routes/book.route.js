@@ -2,6 +2,7 @@
 const express=require('express');
 const { CreateBook,AllBook,deleteBook } = require('../controllers/book.controller');
 const { auth } = require('../middleware/auth.middleware');
+const Book=require('../models/book.model')
 const router=express.Router()
 
 router.post('/create',auth(['librarian']),CreateBook)

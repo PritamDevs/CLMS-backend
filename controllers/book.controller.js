@@ -7,7 +7,16 @@ module.exports.CreateBook = async(req,res)=>{
         let{title,price,description,category,isbn,author,stock,publisher,publishedyear}=req.body;
         if(!title||!price||!description||!category||!isbn||!author||!stock||!publisher||!publishedyear){
             return res.status(400).json({message:"Please fill all the fields",success:false});
-        }else{
+        }
+        price = Number(price);
+        stock = Number(stock);
+        publishedyear = Number(publishedyear);
+
+        let existingBook = await Book.findOne({ isbn });
+        if (existingBook) {
+            return res.status(400).json({ message: "Book already exists", success: false });
+        }
+        else{
             let newBook = await Book.create({
                 title:title,
                 price:price,
@@ -17,7 +26,7 @@ module.exports.CreateBook = async(req,res)=>{
                 author:author,
                 publisher:publisher,
                 publishedyear:publishedyear,
-                stock:stock
+                copiesAvailable:stock
             });
             return res.status(201).json({message:"New Book added successfully",success:true,product:newBook});
         }
@@ -35,6 +44,22 @@ module.exports.AllBook = async(req,res)=>{
     }
 
 }
+exports.AllBook = async (req, res) => {
+  try {
+    const { category, author, title } = req.query;
+    const filter = {};
+
+    if (category) filter.category = category;
+    if (author) filter.author = { $regex: author, $options: 'i' };
+    if (title) filter.title = { $regex: title, $options: 'i' };
+
+    const books = await Book.find(filter);
+
+    return res.status(200).json({ message: "Books fetched", success: true, books });
+  } catch (error) {
+    return res.status(500).json({ message: "Internal Server Error", success: false, error: error.message });
+  }
+};
 module.exports.deleteBook = async(req,res)=>{
     try {
         let id = req.params.id;

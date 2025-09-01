@@ -113,3 +113,90 @@ module.exports.Register=async(req,res)=> {
         res.status(500).json({ message: "Internal Server Error", success:false });
     }
 };
+
+// module.exports.RequestReturn = async (req, res) => {
+//   try {
+//     const { requestId } = req.body;
+
+//     if (!requestId) {
+//       return res.status(400).json({ message: "requestId is required", success: false });
+//     }
+//        if (!req.user?.id||!mongoose.Types.ObjectId.isValid(requestId)) {
+//       return res.status(401).json({ message: "Invalid user Id", success: false });
+//     }
+//     const userId = new mongoose.Types.createFromHexString(req.user.id);
+//     const request = await IssueRequest.findOne({
+//       _id: requestId,
+//       student: userId
+//     });
+
+//     if (!request) {
+//       return res.status(404).json({ message: "Request not found", success: false });
+//     }
+//     if (!request.student.equals(req.user.id)) {
+//       return res.status(403).json({ message: "You do not have permission for this request", success: false });
+//     }
+
+//     if (request.status !== "approved") {
+//       return res.status(400).json({ message: "Only approved books can be requested for return", success: false });
+//     }
+
+//     request.status = "return_requested";
+//     request.returnRequestedAt = new Date();
+//     await request.save();
+
+//     return res.status(200).json({
+//       message: "Return request submitted successfully",
+//       success: true,
+//       request
+//     });
+//   } catch (err) {
+//     console.error("RequestReturn error:", err);
+//     return res.status(500).json({ message: "Internal Server Error", success: false });
+//   }
+// };
+module.exports.RequestReturn = async (req, res) => {
+  try {
+    const { requestId } = req.body;
+
+    if (!requestId) {
+      return res.status(400).json({ message: "requestId is required", success: false });
+    }
+
+    if (!req.user?.id || !mongoose.Types.ObjectId.isValid(requestId)) {
+      return res.status(401).json({ message: "Invalid user Id", success: false });
+    }
+
+    const userId = new mongoose.Types.ObjectId(req.user.id); 
+    const request = await IssueRequest.findById(requestId);
+
+    if (!request) {
+      return res.status(404).json({ message: "Request not found", success: false });
+    }
+    if (!request.student.equals(userId)) {
+      return res.status(403).json({ message: "You do not have permission for this request", success: false });
+    }
+
+    if (request.status !== "approved") {
+      return res.status(400).json({ message: "Only approved books can be requested for return", success: false });
+    }
+
+    if (request.status === "return_requested") {
+      return res.status(400).json({ message: "Return already requested for this book", success: false });
+    }
+
+    request.status = "return_requested";
+    request.returnRequestedAt = new Date();
+    await request.save();
+
+    return res.status(200).json({
+      message: "Return request submitted successfully",
+      success: true,
+      request
+    });
+
+  } catch (err) {
+    console.error("RequestReturn error:", err);
+    return res.status(500).json({ message: "Internal Server Error", success: false });
+  }
+};
