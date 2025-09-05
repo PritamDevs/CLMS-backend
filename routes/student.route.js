@@ -6,7 +6,7 @@ const router=express.Router()
 
 router.post('/login',login)
 router.post('/register',Register)
-router.get('/profile',auth(['student']),Profile)
+router.get('/profile/:id',auth(['student']),Profile)
 router.post('/request-book', auth(['student']), RequestBookIssue);
 router.get('/my-requests', auth(['student']), MyRequests);
 router.post("/request-return", auth(["student"]), RequestReturn);

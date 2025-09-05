@@ -25,11 +25,8 @@ module.exports.auth = (types) => async (req, res, next) => {
             return res.status(401).json({ message: 'Invalid token.', success: false });
         }
 
-        // if (!types.includes(decoded.type)) {
-        //     return res.status(403).json({ message: 'Access denied. You do not have permission.', success: false });
-        // }
         if (!types.includes(decoded.type)) {
-        console.warn(`🚫 Unauthorized access attempt by ${decoded.type}`);
+        console.warn(` Unauthorized access attempt by ${decoded.type}`);
         return res.status(403).json({ message: 'Access denied. You do not have permission.', success: false });
     }
 

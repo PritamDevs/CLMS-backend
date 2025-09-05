@@ -73,7 +73,7 @@ exports.updateRequestStatus = async (req, res) => {
 
     // Handle approval
     if (status === 'approved') {
-      if (request.book.copiesAvailable < 1) {
+      if (request.book.stock < 1) {
         return res.status(400).json({ message: 'No copies available' });
       }
 
@@ -81,7 +81,7 @@ exports.updateRequestStatus = async (req, res) => {
       request.respondedAt = new Date();
       await request.save();
 
-      request.book.copiesAvailable -= 1;
+      request.book.stock -= 1;
       await request.book.save();
 
       return res.status(200).json({ message: 'Request approved', request });

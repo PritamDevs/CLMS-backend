@@ -24,12 +24,30 @@ const studentSchema = new Schema({
     address: {
         type: String,
     },
-    books: [
-        {
+        books:[{
             type: Schema.Types.ObjectId,
             ref: 'Books',
-        }
-    ]
+        }],
+    
+    isSuspended: {
+    type: Boolean,
+    default: false
+    },
+    suspendedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Librarian',
+    default: null
+    },
+    suspensionReason: {
+    type: String,
+    default: ''
+    },
+    suspendedAt: {
+    type: Date,
+    default: null
+    }
+
+
 });
 
 module.exports = mongoose.model('student',studentSchema);

@@ -21,7 +21,7 @@ let librarianSchema = new Schema({
         required: true,
         unique: true,
     },
-    address: {
+    college_id: {
         type: String,
         required: true,
     },

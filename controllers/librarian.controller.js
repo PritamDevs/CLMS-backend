@@ -4,6 +4,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const issueRequest = require("../models/issueRequest.model");
 const Book = require("../models/book.model");
+const studentModel = require("../models/student.model");
 
 module.exports.login = async (req, res) => {
     try {
@@ -49,9 +50,9 @@ module.exports.login = async (req, res) => {
 
 module.exports.Register = async (req, res) => {
     try {
-        let { name, email, password, cpassword, phone, address } = req.body;
+        let { name, email, password, cpassword, phone, college_id } = req.body;
 
-        if (!name || !email || !password || !cpassword || !phone || !address) {
+        if (!name || !email || !password || !cpassword || !phone || !college_id) {
             return res.status(400).json({ message: "Please fill all fields", success: false });
         }
 
@@ -75,7 +76,7 @@ module.exports.Register = async (req, res) => {
             email,
             password: hashedPassword,
             phone,
-            address
+            college_id
         });
         let librarianObj = newLibrarian.toObject();
 
@@ -106,11 +107,88 @@ module.exports.Profile = async (req, res) => {
         return res.status(500).json({ message: "Internal Server Error", success: false });
     }
 };
+ 
+
+module.exports.suspendStudent = async (req, res) => {
+  try {
+    const studentId = req.params.id;
+    const { reason } = req.body;
+    const librarianId = req.user.id;
+
+    const student = await studentModel.findById(studentId);
+    if (!student) {
+      return res.status(404).json({ message: "Student not found", success: false });
+    }
+
+    if (student.isSuspended) {
+      return res.status(400).json({ message: "Student is already suspended", success: false });
+    }
+
+    student.isSuspended = true;
+    student.suspendedBy = librarianId;
+    student.suspensionReason = reason || "No reason provided";
+    student.suspendedAt = new Date();
+
+    await student.save();
+
+    return res.status(200).json({
+      message: "Student suspended successfully",
+      success: true,
+      student
+    });
+  } catch (error) {
+    console.error("suspendStudent error:", error);
+    return res.status(500).json({
+      message: "Internal Server Error",
+      success: false,
+      error: error.message
+    });
+  }
+};
+
+
+ 
+module.exports.unsuspendStudent = async (req, res) => {
+  try {
+    const studentId = req.params.id;
+    const librarianId = req.user.id; 
+
+  const student = await studentModel.findById(studentId);
+    if (!student) {
+      return res.status(404).json({ message: "Student not found", success: false });
+    }
+
+    if (!student.isSuspended) {
+      return res.status(400).json({ message: "Student is not suspended", success: false });
+    }
+
+    student.isSuspended = false;
+    student.suspendedBy = null;
+    student.suspensionReason = '';
+    student.suspendedAt = null;
+    student.unsuspendedBy = librarianId;
+    student.unsuspendedAt = new Date();
+
+    await student.save();
+
+    return res.status(200).json({
+      message: "Student unsuspended successfully",
+      success: true,
+      student
+    });
+  } catch (error) {
+    console.error("unsuspendStudent error:", error);
+    return res.status(500).json({
+      message: "Internal Server Error",
+      success: false,
+      error: error.message
+    });
+  }
+};
+
 
 module.exports.AllRequests = async (req, res) => {
     try {
-        // const requests = await issueRequest.find().populate("student book");
-        // res.status(200).json({ message: "All book requests", success:true, requests });
     const { status } = req.query; 
     let query = {};
     if (status) {
@@ -118,7 +196,7 @@ module.exports.AllRequests = async (req, res) => {
     }
     const requests = await IssueRequest.find(query)
       .populate("student", "name email")
-      .populate("book", "title copiesAvailable");
+      .populate("book", "title stockAvailable");
 
     return res.status(200).json({
       message: "Requests fetched successfully",
@@ -142,10 +220,10 @@ module.exports.UpdateRequestStatus = async (req, res) => {
     if (status === "approved") {
       // Approving a new issue request → decrease stock
       if (request.status === "pending") {
-        if (request.book.copiesAvailable <= 0) {
-          return res.status(400).json({ message: "No copies available", success: false });
+        if (request.book.stock <= 0) {
+          return res.status(400).json({ message: "No stock available", success: false });
         }
-        request.book.copiesAvailable -= 1;
+        request.book.stock-= 1;
         await request.book.save();
       }
       request.status = "approved";
@@ -164,7 +242,7 @@ module.exports.UpdateRequestStatus = async (req, res) => {
         return res.status(400).json({ message: "Book must be return_requested before marking returned", success: false });
       }
       request.status = "returned";
-      request.book.copiesAvailable += 1; // increase stock
+      request.book.stock += 1; // increase stock
       await request.book.save();
       request.respondedAt = new Date();
     }
@@ -201,7 +279,7 @@ module.exports.ReturnBook = async (req, res) => {
     request.returnedAt = new Date();
 
     // Increase available copies
-    request.book.copiesAvailable += 1;
+    request.book.stock += 1;
 
     await request.book.save();
     await request.save();
