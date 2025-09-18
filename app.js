@@ -31,7 +31,7 @@ let bookRoute = require('./routes/book.route')
 app.use('/api/book',bookRoute)
 let issueRequestRoute = require('./routes/issueRequest.route');
 app.use('/api/request', issueRequestRoute)
-app.use('/api/student', require('./routes/student.route'));
+// app.use('/api/student', require('./routes/student.route'));
 
 if (process.env.NODE_ENV === "production") {
     const frontendPath = path.join(__dirname, "dist"); 
