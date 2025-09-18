@@ -5,6 +5,7 @@ let app=express()
 const connectDB = require('./config/db.config')
 dotenv.config()
 const cors =require('cors')
+const path=require('path')
 
 //middleware
 app.use(express.urlencoded({extended:true}))
