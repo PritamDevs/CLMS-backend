@@ -1,46 +1,42 @@
-   
+const mongoose = require("mongoose");   
 const Librarian = require("../models/librarian.model");
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const issueRequest = require("../models/issueRequest.model");
-const Book = require("../models/book.model");
 const studentModel = require("../models/student.model");
+const Book = require("../models/book.model");
+
 
 module.exports.login = async (req, res) => {
     try {
         let { email, password } = req.body;
         if (!email || !password) {
             return res.status(400).json({ message: "Email and password are required", success: false });
-        }
-
-        let librarian = await Librarian.findOne({ email });
+        }else{
+        let librarian = await Librarian.findOne({ email:email });
         if (!librarian) {
             return res.status(400).json({ message: "Invalid email", success: false });
-        }
-
+        }else{
         let isValidPassword = await bcrypt.compare(password, librarian.password);
         if (!isValidPassword) {
             return res.status(400).json({ message: "Invalid Password", success: false });
-        }
-
+        }else{
         delete librarian._doc.password;
-
+        
         let payload = {
             name: librarian.name,
             email: librarian.email,
             phone: librarian.phone,
-            id: librarian._id,
+            _id: librarian._id,
             type: "librarian"
         };
-
-        let token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1h' });
+        let token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '7d' });
 
         return res.status(200).json({
-            message: "Login successful",
-            success: true,
-            token,
-            librarian
-        });
+            message: "Login successful",success: true,token,librarian: payload});
+      }
+    }
+  }
 
     } catch (err) {
         console.error("Login error:", err);
@@ -50,9 +46,9 @@ module.exports.login = async (req, res) => {
 
 module.exports.Register = async (req, res) => {
     try {
-        let { name, email, password, cpassword, phone, college_id } = req.body;
+        let { name, email, password, cpassword, phone} = req.body;
 
-        if (!name || !email || !password || !cpassword || !phone || !college_id) {
+        if (!name || !email || !password || !cpassword || !phone) {
             return res.status(400).json({ message: "Please fill all fields", success: false });
         }
 
@@ -76,16 +72,12 @@ module.exports.Register = async (req, res) => {
             email,
             password: hashedPassword,
             phone,
-            college_id
         });
-        let librarianObj = newLibrarian.toObject();
-
-        delete librarianObj.password;
-
+        delete newLibrarian.password;
         return res.status(201).json({
             message: "Librarian Registration Successfully",
             success: true,
-            librarian: librarianObj
+            newLibrarian
         });
 
     } catch (err) {
@@ -96,12 +88,15 @@ module.exports.Register = async (req, res) => {
 
 module.exports.Profile = async (req, res) => {
     try {
-        let data = await Librarian.findById(req.user.id);
-        if (!data) {
+        let _id = req.params.id;
+        let librarian = await Librarian.findById(_id);
+        if (!librarian) {
             return res.status(404).json({ message: "Librarian not found", success: false });
         }
-        delete data._doc.password;
-        return res.json({ message: "Librarian profile", success: true, data });
+        else{
+        delete librarian._doc.password;
+        return res.json({ message: "Librarian profile", success: true, librarian });
+        }
     } catch (error) {
         console.error("Profile error:", error);
         return res.status(500).json({ message: "Internal Server Error", success: false });
@@ -191,12 +186,15 @@ module.exports.AllRequests = async (req, res) => {
     try {
     const { status } = req.query; 
     let query = {};
-    if (status) {
-      query.status = status;
-    }
-    const requests = await IssueRequest.find(query)
-      .populate("student", "name email")
-      .populate("book", "title stockAvailable");
+    if (status) query.status = status;
+
+    console.log("Fetching requests with query:", query);
+
+    const requests = await issueRequest.find(query)
+      .populate({path:"student",select: "name email",strictPopulate: false})
+      .populate({path:"book", select:"title stockAvailable",strictPopulate: false});
+
+    console.log("Fetched requests count:", requests.length);
 
     return res.status(200).json({
       message: "Requests fetched successfully",
@@ -210,50 +208,121 @@ module.exports.AllRequests = async (req, res) => {
         res.status(500).json({ message: "Internal Server Error", success:false });
     }
 };
+// module.exports.UpdateRequestStatus = async (req, res) => {
+//   try {
+//     const requestId = req.params.id; 
+//     const { status, rejectionReason } = req.body;
+
+//     console.log("Updating request ID:", requestId);
+//     console.log("Requested status:", status);
+
+//     const request = await issueRequest.findById(requestId).populate("book");
+//     if (!request) 
+//       return res.status(404).json({ message: "Request not found", success: false });
+
+//     if (status === "approved") {
+//       // Approving a new issue request → decrease stock
+//       if (request.status === "pending") {
+//         if (request.book.stock <= 0) {
+//           return res.status(400).json({ message: "No stock available", success: false });
+//         }
+//         request.book.stock-= 1;
+//         await request.book.save();
+//       }
+//       request.status = "approved";
+//       request.respondedAt = new Date();
+//       request.book.stock -= 1;
+//       await request.book.save();
+//     } 
+    
+//     else if (status === "rejected") {
+//          if (request.status !== "pending") {
+//         return res.status(400).json({ message: "Only pending requests can be rejected", success: false });
+//       }
+//       request.status = "rejected";
+//       request.rejectionReason = rejectionReason || "Not specified";
+//       request.respondedAt = new Date();
+//     }
+
+//     else if (status === "returned") {
+//       // Librarian approves a return
+//       if (request.status !== "return_requested") {
+//         return res.status(400).json({ message: "Book must be return_requested before marking returned", success: false });
+//       }
+//       request.status = "returned";
+//       request.book.stock += 1; // increase stock
+//       await request.book.save();
+//       request.respondedAt = new Date();
+//     }
+
+//     await request.save();
+//     return res.status(200).json({ message: "Request updated", success: true, request });
+//   } catch (err) {
+//     console.error("UpdateRequestStatus error:", err);
+//     return res.status(500).json({ message: "Internal Server Error", success: false });
+//   }
+// };
 module.exports.UpdateRequestStatus = async (req, res) => {
   try {
-    const { requestId, status, rejectionReason } = req.body;
+    const requestId = req.params.id;
+    const { status, rejectionReason } = req.body;
 
-    const request = await IssueRequest.findById(requestId).populate("book");
-    if (!request) return res.status(404).json({ message: "Request not found", success: false });
+    console.log("Updating request ID:", requestId, "to status:", status);
 
+    const request = await issueRequest.findById(requestId).populate("book");
+    if (!request) 
+      return res.status(404).json({ message: "Request not found", success: false });
+
+    // ---- APPROVE ISSUE ----
     if (status === "approved") {
-      // Approving a new issue request → decrease stock
-      if (request.status === "pending") {
-        if (request.book.stock <= 0) {
-          return res.status(400).json({ message: "No stock available", success: false });
-        }
-        request.book.stock-= 1;
-        await request.book.save();
+      if (request.status !== "pending") {
+        return res.status(400).json({ message: "Only pending requests can be approved", success: false });
       }
+      if (request.book.stock <= 0) {
+        return res.status(400).json({ message: "No stock available", success: false });
+      }
+      request.book.stock -= 1;
+      await request.book.save();
+
       request.status = "approved";
       request.respondedAt = new Date();
-    } 
-    
+    }
+
+    // ---- REJECT ISSUE ----
     else if (status === "rejected") {
+      if (request.status !== "pending") {
+        return res.status(400).json({ message: "Only pending requests can be rejected", success: false });
+      }
       request.status = "rejected";
       request.rejectionReason = rejectionReason || "Not specified";
       request.respondedAt = new Date();
     }
 
+    // ---- APPROVE RETURN ----
     else if (status === "returned") {
-      // Librarian approves a return
       if (request.status !== "return_requested") {
         return res.status(400).json({ message: "Book must be return_requested before marking returned", success: false });
       }
       request.status = "returned";
-      request.book.stock += 1; // increase stock
+      request.returnedAt = new Date();
+
+      request.book.stock += 1;
       await request.book.save();
-      request.respondedAt = new Date();
+    }
+
+    else {
+      return res.status(400).json({ message: "Invalid status update", success: false });
     }
 
     await request.save();
     return res.status(200).json({ message: "Request updated", success: true, request });
+
   } catch (err) {
     console.error("UpdateRequestStatus error:", err);
     return res.status(500).json({ message: "Internal Server Error", success: false });
   }
 };
+
 
 module.exports.ReturnBook = async (req, res) => {
   try {
@@ -295,4 +364,5 @@ module.exports.ReturnBook = async (req, res) => {
     return res.status(500).json({ message: "Server error", error: err.message });
   }
 };
+
 

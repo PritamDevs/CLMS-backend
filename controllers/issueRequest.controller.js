@@ -38,7 +38,7 @@ exports.createRequest = async (req, res) => {
 // Get all requests made by the logged-in student
 exports.getStudentRequests = async (req, res) => {
   try {
-    const studentId = req.user._id;
+    const studentId = req.user.id;
     const requests = await IssueRequest.find({ student: studentId }).populate('book');
     res.status(200).json(requests);
   } catch (err) {

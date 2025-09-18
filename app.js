@@ -10,9 +10,17 @@ const cors =require('cors')
 app.use(express.urlencoded({extended:true}))
 app.use(express.json())
 app.use(cors({
-    origin:'*',
+    origin:process.env.FRONTEND_URL,
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    credentials:true
 }))
 
+app.use((err, req, res, next) => {
+  if (err instanceof cors.CorsError) {
+    return res.status(403).json({ message: 'CORS error', success: false });
+  }
+  next(err);
+});
 
 let studentRoute = require('./routes/student.route')
 app.use('/api/student',studentRoute)
@@ -22,6 +30,8 @@ let bookRoute = require('./routes/book.route')
 app.use('/api/book',bookRoute)
 let issueRequestRoute = require('./routes/issueRequest.route');
 app.use('/api/request', issueRequestRoute)
+app.use('/api/student', require('./routes/student.route'));
+
 
 connectDB()
 .then(()=>{

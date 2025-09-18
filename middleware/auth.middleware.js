@@ -6,6 +6,8 @@ module.exports.auth = (types) => async (req, res, next) => {
     try {
         let token = req.header('Authorization');
 
+        console.log("Authorization header:", token);
+
         if (!token) {
             return res.status(401).json({ message: 'Access denied. No token provided.', success: false });
         }
@@ -25,12 +27,20 @@ module.exports.auth = (types) => async (req, res, next) => {
             return res.status(401).json({ message: 'Invalid token.', success: false });
         }
 
+        console.log("Allowed types:", types); 
+        console.log("Token type:", decoded.type);
+
         if (!types.includes(decoded.type)) {
         console.warn(` Unauthorized access attempt by ${decoded.type}`);
         return res.status(403).json({ message: 'Access denied. You do not have permission.', success: false });
     }
 
-        req.user = decoded;
+        req.user = {
+            decoded,
+        _id: decoded._id,
+        type:decoded.id
+        };
+        console.log("req.user after assignment:", req.user);
         next();
 
     } catch (error) {

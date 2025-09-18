@@ -26,7 +26,6 @@ let bookSchema = new Schema({
     },
     category: {
         type: String,
-        enum: ['Collegesubject', 'Fiction', 'Non-Fiction', 'Kids','Self-help','SyllabusBooks','Others'],
         required: true,
     },
     description: {

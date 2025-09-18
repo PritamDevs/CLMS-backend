@@ -12,6 +12,6 @@ const router = express.Router();
 router.post('/create', auth(['student']), createRequest);
 router.get('/student/:id', auth(['student']), getStudentRequests);
 router.get('/pending', auth(['librarian']), getPendingRequests);
-router.patch('/:id', auth(['librarian']), updateRequestStatus);
+router.patch('requests/:id', auth(['librarian']), updateRequestStatus);
 
 module.exports = router;

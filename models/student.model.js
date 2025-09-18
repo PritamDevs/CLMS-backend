@@ -24,7 +24,7 @@ const studentSchema = new Schema({
     address: {
         type: String,
     },
-        books:[{
+    books:[{
             type: Schema.Types.ObjectId,
             ref: 'Books',
         }],
@@ -50,4 +50,4 @@ const studentSchema = new Schema({
 
 });
 
-module.exports = mongoose.model('student',studentSchema);
+module.exports = mongoose.model('Student',studentSchema);

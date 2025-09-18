@@ -21,10 +21,6 @@ let librarianSchema = new Schema({
         required: true,
         unique: true,
     },
-    college_id: {
-        type: String,
-        required: true,
-    },
     books: [
         {
             type: Schema.Types.ObjectId,
