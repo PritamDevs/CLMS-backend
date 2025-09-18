@@ -38,7 +38,7 @@ module.exports.auth = (types) => async (req, res, next) => {
         req.user = {
             decoded,
         _id: decoded._id,
-        type:decoded.id
+        type:decoded.type
         };
         console.log("req.user after assignment:", req.user);
         next();

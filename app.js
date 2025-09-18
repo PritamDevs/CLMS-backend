@@ -1,9 +1,9 @@
 
 let express = require('express')
 let dotenv=require('dotenv')
+dotenv.config()
 let app=express()
 const connectDB = require('./config/db.config')
-dotenv.config()
 const cors =require('cors')
 
 //middleware
