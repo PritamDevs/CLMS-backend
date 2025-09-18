@@ -32,6 +32,14 @@ let issueRequestRoute = require('./routes/issueRequest.route');
 app.use('/api/request', issueRequestRoute)
 app.use('/api/student', require('./routes/student.route'));
 
+if (process.env.NODE_ENV === "production") {
+    const frontendPath = path.join(__dirname, "dist"); 
+    app.use(express.static(frontendPath));
+
+    app.get("*", (req, res) => {
+        res.sendFile(path.resolve(frontendPath, "index.html"));
+    });
+}
 
 connectDB()
 .then(()=>{
@@ -39,3 +47,6 @@ connectDB()
         console.log(`Server is running on port ${process.env.PORT}`)
     })
 })
+.catch(err => {
+    console.error("DB connection failed:", err);
+});
