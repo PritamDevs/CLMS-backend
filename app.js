@@ -30,7 +30,19 @@ let bookRoute = require('./routes/book.route')
 app.use('/api/book',bookRoute)
 let issueRequestRoute = require('./routes/issueRequest.route');
 app.use('/api/request', issueRequestRoute)
-app.use('/api/student', require('./routes/student.route'));
+
+// ✅ Then your error handler for CORS (optional but good)
+app.use((err, req, res, next) => {
+  if (err instanceof cors.CorsError) {
+    return res.status(403).json({ message: 'CORS error', success: false });
+  }
+  next(err);
+});
+
+// ✅ Finally, catch-all 404 handler
+app.use((req, res) => {
+  res.status(404).json({ message: `Route ${req.originalUrl} not found`, success: false });
+});
 
 
 connectDB()
