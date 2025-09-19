@@ -9,6 +9,7 @@ const cors =require('cors')
 //middleware
 app.use(express.urlencoded({extended:true}))
 app.use(express.json())
+
 app.use(cors({
     origin:process.env.FRONTEND_URL,
     methods: ['GET', 'POST', 'PUT', 'DELETE'],

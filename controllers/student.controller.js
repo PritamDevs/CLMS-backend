@@ -90,7 +90,7 @@ module.exports.Profile = async (req, res) => {
   return res.status(200).json({ message: "Student profile fetched successfully", success: true, student });
 
     console.log("Fetched student profile:", data); 
-    return res.send({ message: "student profile", success: true, data, token})
+    return res.status({ message: "student profile", success: true, data, token})
   } catch (error) {
     return res.status(500).json({ message: "Internal Server Error", success: false });
   }
